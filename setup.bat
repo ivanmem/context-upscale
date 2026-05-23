@@ -73,16 +73,26 @@ echo.
 
 :: --- Step 5: Start server now ---
 echo [5/5] Starting upscale server...
-taskkill /F /IM python.exe /FI "WINDOWTITLE eq *app.py*" >nul 2>&1
-start "" /B "%SERVER_DIR%\start.bat" >nul 2>&1
-timeout /t 3 /nobreak >nul
-curl -s http://127.0.0.1:7869/health >nul 2>&1
-if errorlevel 1 (
-    echo       WARNING: Server may still be starting. Check server/start.bat if issues persist.
-) else (
-    echo       Server is running on http://127.0.0.1:7869
-)
+:: Kill any existing instance by port instead of unreliable window title filter
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":7869.*LISTENING"') do taskkill /F /PID %%a >nul 2>&1
+start "UpscaleServer" /MIN "%SERVER_DIR%\start.bat"
+:: Wait up to 15 seconds for the server to become healthy
+set /a TRIES=0
+:WAIT_LOOP
+if !TRIES! geq 15 goto WAIT_DONE
+timeout /t 1 /nobreak >nul
+curl -s http://127.0.0.1:7869/health >nul 2>&1 && goto SERVER_OK
+set /a TRIES+=1
+goto WAIT_LOOP
+:SERVER_OK
+echo       Server is running on http://127.0.0.1:7869
 echo       Done.
+goto STEP5_END
+:WAIT_DONE
+echo       WARNING: Server did not respond within 15s.
+echo       A console window 'UpscaleServer' was opened — check it for errors.
+echo       Done.
+:STEP5_END
 echo.
 
 echo ============================================

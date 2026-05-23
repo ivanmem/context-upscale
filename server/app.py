@@ -197,11 +197,11 @@ async def upscale(file: UploadFile = File(...)):
             raise HTTPException(status_code=500, detail=f"Upscale error: {e}")
     result_img = Image.fromarray(output)
     buf = io.BytesIO()
-    result_img.save(buf, format="PNG")
-    png_bytes = buf.getvalue()
+    result_img.save(buf, format="JPEG", quality=95)
+    jpg_bytes = buf.getvalue()
     result_id = uuid.uuid4().hex[:12]
-    _results[result_id] = (png_bytes, time.time())
-    logger.info("Upscale complete, result_id=%s, %d bytes", result_id, len(png_bytes))
+    _results[result_id] = (jpg_bytes, time.time())
+    logger.info("Upscale complete, result_id=%s, %d bytes", result_id, len(jpg_bytes))
     return {"id": result_id}
 
 
@@ -210,8 +210,8 @@ async def get_result(result_id: str):
     entry = _results.get(result_id)
     if entry is None:
         raise HTTPException(status_code=404, detail="Result not found or expired")
-    png_bytes, _ = entry
-    return StreamingResponse(io.BytesIO(png_bytes), media_type="image/png")
+    jpg_bytes, _ = entry
+    return StreamingResponse(io.BytesIO(jpg_bytes), media_type="image/jpeg")
 
 
 if __name__ == "__main__":
