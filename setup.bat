@@ -1,4 +1,10 @@
 @echo off
+:: Auto-elevate to admin if not already
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    powershell -NoProfile -Command "Start-Process cmd -ArgumentList '/c \"%~f0\"' -Verb RunAs"
+    exit /b
+)
 setlocal enabledelayedexpansion
 
 echo ============================================
@@ -60,10 +66,11 @@ if not exist "%WEIGHTS_FILE%" (
 echo       Done.
 echo.
 
-:: --- Step 4: Register autostart ---
-echo [4/5] Registering auto-start on login...
-schtasks /create /tn "UpscaleServer" /tr "\"%SERVER_DIR%\start.bat\"" /sc onlogon /rl limited /f >nul 2>&1
-if errorlevel 1 (
+:: --- Step 4: Register autostart (requires admin) ---
+echo [4/5] Registering auto-start on login (requires admin)...
+set VBS_PATH=%SERVER_DIR%start-silent.vbs
+schtasks /create /tn "UpscaleServer" /tr "wscript.exe \"%VBS_PATH%\"" /sc onlogon /rl limited /f
+if !errorlevel! neq 0 (
     echo       WARNING: Could not register auto-start. Run install-autostart.bat as admin later.
 ) else (
     echo       Auto-start registered.
@@ -73,9 +80,7 @@ echo.
 
 :: --- Step 5: Start server now ---
 echo [5/5] Starting upscale server...
-:: Kill any existing instance by port instead of unreliable window title filter
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":7869.*LISTENING"') do taskkill /F /PID %%a >nul 2>&1
-start "UpscaleServer" /MIN "%SERVER_DIR%\start.bat"
+call "%SERVER_DIR%\run-now.bat"
 :: Wait up to 15 seconds for the server to become healthy
 set /a TRIES=0
 :WAIT_LOOP
@@ -90,7 +95,7 @@ echo       Done.
 goto STEP5_END
 :WAIT_DONE
 echo       WARNING: Server did not respond within 15s.
-echo       A console window 'UpscaleServer' was opened — check it for errors.
+echo       Check server\server.log for errors.
 echo       Done.
 :STEP5_END
 echo.

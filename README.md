@@ -9,7 +9,7 @@
 
 ### 1. Сервер
 
-Запусти `setup.bat` от имени пользователя (не нужен админ):
+Запусти `setup.bat` (автоматически запросит права администратора для регистрации автозапуска):
 
 ```bat
 setup.bat
@@ -21,8 +21,8 @@ setup.bat
 - Скачивает веса 4x-UltraSharp (~64 МБ)
 - Регистрирует автозапуск сервера при входе в Windows
 
-После этого сервер будет работать автоматически.
-Ручной запуск/остановка: `server/start.bat` / убить процесс в диспетчере задач.
+После этого сервер будет работать автоматически в фоне (без консоли).
+Ручной перезапуск: `server/run-now.bat` (убивает старый процесс и запускает новый скрыто).
 
 ### 2. Расширение Chrome
 
@@ -63,7 +63,8 @@ upscale-context-menu/
 │   ├── requirements.txt
 │   ├── weights/
 │   │   └── 4x-UltraSharp.pth
-│   ├── start.bat           # Ручной запуск
+│   ├── run-now.bat         # Перезапуск сервера (скрыто)
+│   ├── start-silent.vbs    # Скрытый запуск через python.exe
 │   ├── install-autostart.bat
 │   └── remove-autostart.bat
 ├── setup.bat               # Установка всего одним скриптом
@@ -76,7 +77,7 @@ upscale-context-menu/
 |---|---|
 | Включить автозапуск | `server/install-autostart.bat` |
 | Отключить автозапуск | `server/remove-autostart.bat` |
-| Запустить вручную | `server/start.bat` |
+| Перезапустить сервер (скрыто) | `server/run-now.bat` |
 
 ## Требования
 
@@ -89,7 +90,7 @@ upscale-context-menu/
 ## Troubleshooting
 
 **«Сервер апскейла не запущен»**
-→ Запусти `server/start.bat` и дождись строки `Uvicorn running on http://127.0.0.1:7869`
+→ Запусти `server/run-now.bat`. Проверить статус: `curl http://127.0.0.1:7869/health`. Логи: `server/server.log`
 
 **Health показывает `device: cpu`**
 → Переустанови PyTorch с CUDA:
