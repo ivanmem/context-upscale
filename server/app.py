@@ -22,6 +22,7 @@ from PIL import Image
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
+    filename=str(Path(__file__).parent / "server.log"),
 )
 logger = logging.getLogger(__name__)
 

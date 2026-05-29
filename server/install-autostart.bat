@@ -1,7 +1,7 @@
 @echo off
 :: Register upscale server as a Task Scheduler task (runs at user login)
 set TASK_NAME=UpscaleServer
-set SCRIPT_PATH=%~dp0start-silent.vbs
+set SCRIPT_PATH=%~dp0\start-silent.vbs
 
 echo [Upscale Server] Creating scheduled task "%TASK_NAME%"...
 schtasks /create /tn "%TASK_NAME%" /tr "wscript.exe \"%SCRIPT_PATH%\"" /sc onlogon /rl limited /f

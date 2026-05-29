@@ -68,7 +68,7 @@ echo.
 
 :: --- Step 4: Register autostart (requires admin) ---
 echo [4/5] Registering auto-start on login (requires admin)...
-set VBS_PATH=%SERVER_DIR%start-silent.vbs
+set VBS_PATH=%SERVER_DIR%\start-silent.vbs
 schtasks /create /tn "UpscaleServer" /tr "wscript.exe \"%VBS_PATH%\"" /sc onlogon /rl limited /f
 if !errorlevel! neq 0 (
     echo       WARNING: Could not register auto-start. Run install-autostart.bat as admin later.
