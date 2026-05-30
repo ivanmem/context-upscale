@@ -1,13 +1,17 @@
 # Upscale Context Menu — Roadmap
 
-Chrome-расширение + локальный GPU-сервер для апскейла изображений через контекстное меню.
+Локальный GPU-сервер + три клиента (Explorer, Chrome, Tampermonkey) для апскейла изображений через контекстное меню.
 Качество не хуже 4x-UltraSharp из SD WebUI, без запуска полного SD pipeline.
 
 ## Архитектура
 
+- **Explorer Context Menu** — ПКМ по файлу → «Upscale (4x)», PowerShell-скрипт отправляет файл на сервер, результат открывается в браузере
 - **Chrome Extension (Manifest V3)** — контекстное меню «Апскейлнуть», fetch изображения из кэша браузера, POST binary на локальный сервер
+- **Tampermonkey Userscript** — аналог расширения для любого браузера, отслеживание последнего hovered-изображения через mouseover
+- **Shared lib/** — общий API-клиент (health check + upscale) для extension и tampermonkey
 - **Python-сервер (FastAPI + uvicorn)** — lazy load модели Real-ESRGAN, выгрузка из VRAM по таймауту простоя
 - **Модель** — Real-ESRGAN с весами 4x-UltraSharp
+- **manage.bat** — единый инструмент управления (установка, запуск, автозапуск, контекстное меню, CLI)
 - **Сервер всегда запущен** через Task Scheduler, модель выгружается из VRAM при простое (~30 МБ RAM idle, GPU свободен)
 
 ## Этапы
@@ -31,13 +35,25 @@ Chrome-расширение + локальный GPU-сервер для апс�
 - [x] Интеграция через `realesrgan` / `basicsr` + PyTorch CUDA 12.1
 - [x] Tile-based inference (tile=512) для больших изображений
 
-### 4. Автозапуск и установка ✅
-- [x] Windows Task Scheduler: `install-autostart.bat` / `remove-autostart.bat`
-- [x] Скрипт запуска `start.bat` с автоустановкой зависимостей
-- [x] `setup.bat` — полная установка одним скриптом (venv + CUDA + веса + автозапуск)
+### 4. Автозапуск и управление ✅
+- [x] `manage.bat` — единый CLI + интерактивное меню
+- [x] Windows Task Scheduler: автозапуск при входе
+- [x] Полная установка одним действием (`manage.bat install`)
 - [x] README.md с инструкцией
 
-### 5. Тестирование и полировка ⏳
+### 5. Tampermonkey Userscript ✅
+- [x] Отслеживание последнего hovered-изображения через mouseover
+- [x] Vite-сборка в `tampermonkey/dist/upscale.user.js`
+- [x] Установка через `manage.bat tampermonkey`
+- [x] Shared lib/ для переиспользования API-клиента
+
+### 6. Explorer Context Menu ✅
+- [x] Регистрация «Upscale (4x)» для .png/.jpg/.jpeg/.webp/.bmp/.tiff/.tif
+- [x] PowerShell-скрипт `upscale-file.ps1` с multipart/form-data
+- [x] Управление через `manage.bat context-menu` / `no-context-menu`
+- [x] Очистка реестра при uninstall
+
+### 7. Тестирование и полировка ⏳
 - [ ] Сравнение качества с SD WebUI 4x-UltraSharp (должно быть идентично)
 - [ ] Тесты на различных размерах изображений
 - [ ] Проверка выгрузки VRAM после простоя

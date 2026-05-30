@@ -2,10 +2,11 @@
 
 Right-click any image → **Upscale** → result opens in a new tab.
 
-A lightweight Chrome extension and Tampermonkey userscript that upscale images using a local GPU server powered by Real-ESRGAN 4x-UltraSharp. Images are sent as binary data (not URLs), avoiding double downloads and regional blocking issues.
+A lightweight toolset — Explorer context menu, Chrome extension, and Tampermonkey userscript — for upscaling images using a local GPU server powered by Real-ESRGAN 4x-UltraSharp. Browser clients send binary data (not URLs), avoiding double downloads and regional blocking issues.
 
 ## Features
 
+- **Explorer Context Menu** — right-click any image file in Windows Explorer → Upscale (4x)
 - **Chrome Extension** — native context menu integration (MV3)
 - **Tampermonkey Userscript** — works in any browser with Tampermonkey
 - **Local GPU Server** — FastAPI + Real-ESRGAN on your own hardware
@@ -16,7 +17,8 @@ A lightweight Chrome extension and Tampermonkey userscript that upscale images u
 ## Architecture
 
 ```
-┌─────────────────┐   blob (binary)    ┌──────────────────┐
+┌─────────────────┐   multipart/form   ┌──────────────────┐
+│  Explorer Menu  │ ── POST /upscale ─→ │                  │
 │  Chrome Ext /   │ ── POST /upscale ─→ │  FastAPI Server   │
 │  Tampermonkey   │ ←── JPEG result ── │  Real-ESRGAN 4x   │
 └─────────────────┘                     │  localhost:7869   │
@@ -56,7 +58,13 @@ Select option **[1] Full install**. This will:
 
 The server runs silently in the background. To restart manually: `server/run-now.bat`
 
-### 2a. Chrome Extension
+### 2a. Explorer Context Menu (Optional)
+
+Run `manage.bat` → option **[A] Add Upscale to Explorer context menu**.
+
+This registers "Upscale (4x)" in the right-click menu for `.png`, `.jpg`, `.jpeg`, `.webp`, `.bmp`, `.tiff`, `.tif` files. The upscaled result opens in your default browser. To remove: option **[B]** or `manage.bat no-context-menu`.
+
+### 2b. Chrome Extension
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode** (toggle in top-right)
@@ -65,7 +73,7 @@ The server runs silently in the background. To restart manually: `server/run-now
 
 Done. Right-click any image to see the **Upscale** menu item.
 
-### 2b. Tampermonkey Userscript (Alternative)
+### 2c. Tampermonkey Userscript (Alternative)
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/)
 2. Run `manage.bat` → option **[8] Install Tampermonkey script**
@@ -98,7 +106,9 @@ Run `manage.bat` without arguments:
 | [6] | Enable autostart |
 | [7] | Disable autostart |
 | [8] | Install Tampermonkey script |
-| [9] | Uninstall (stop + disable autostart) |
+| [9] | Uninstall (stop + disable autostart + remove context menu) |
+| [A] | Add Upscale to Explorer context menu |
+| [B] | Remove Upscale from Explorer context menu |
 
 ### CLI Mode
 
@@ -111,8 +121,10 @@ manage.bat deps          # Install Python dependencies
 manage.bat weights       # Download model weights
 manage.bat autostart     # Enable autostart
 manage.bat no-autostart  # Disable autostart
-manage.bat tampermonkey  # Build & install Tampermonkey script
-manage.bat uninstall     # Stop + disable autostart
+manage.bat tampermonkey    # Build & install Tampermonkey script
+manage.bat context-menu    # Add Explorer context menu
+manage.bat no-context-menu # Remove Explorer context menu
+manage.bat uninstall       # Stop + disable autostart + remove context menu
 ```
 
 ## Project Structure
@@ -130,6 +142,7 @@ upscale-context-menu/
 │   └── upscale.js          # Health check + upscale API client
 ├── server/                 # Python GPU server
 │   ├── app.py              # FastAPI + Real-ESRGAN
+│   ├── upscale-file.ps1    # Explorer context menu handler
 │   ├── requirements.txt
 │   ├── run-now.bat         # Restart server (hidden)
 │   ├── start-silent.vbs    # Silent launch wrapper
