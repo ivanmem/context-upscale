@@ -1,5 +1,5 @@
 {
-  "name": "upscale-context-menu",
+  "name": "context-upscale",
   "version": "1.0.0",
   "description": "Right-click any image → Upscale → result in new tab. Local GPU server with Real-ESRGAN.",
   "scripts": {

@@ -10,7 +10,7 @@ import { resolve } from "node:path";
 
 const USERSCRIPT_HEADER = `// ==UserScript==
 // @name         Апскейл изображений
-// @namespace    upscale-context-menu
+// @namespace    context-upscale
 // @version      1.0.0
 // @description  Апскейл картинок через контекстное меню Tampermonkey с помощью локального GPU-сервера
 // @match        *://*/*

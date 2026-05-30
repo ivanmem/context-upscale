@@ -130,7 +130,7 @@ manage.bat uninstall       # Stop + disable autostart + remove context menu
 ## Project Structure
 
 ```
-upscale-context-menu/
+context-upscale/
 ├── extension/              # Chrome extension (MV3)
 │   ├── manifest.json
 │   ├── background.js       # Context menu + fetch + POST
