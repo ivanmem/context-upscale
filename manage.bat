@@ -30,6 +30,8 @@ if /i "%~1"=="weights" goto DOWNLOAD_WEIGHTS
 if /i "%~1"=="autostart" goto REGISTER_AUTOSTART
 if /i "%~1"=="no-autostart" goto REMOVE_AUTOSTART
 if /i "%~1"=="tampermonkey" goto INSTALL_TM
+if /i "%~1"=="context-menu" goto INSTALL_CONTEXT_MENU
+if /i "%~1"=="no-context-menu" goto REMOVE_CONTEXT_MENU
 if /i "%~1"=="uninstall" goto UNINSTALL
 if /i "%~1"=="status" goto STATUS
 echo Unknown command: %~1
@@ -37,21 +39,26 @@ echo.
 echo Usage: manage.bat [command]
 echo.
 echo Commands:
-echo   install       Full install (venv + deps + weights + autostart + start)
-echo   start         Start server
-echo   stop          Stop server
-echo   deps          Install dependencies only
-echo   weights       Download model weights only
-echo   autostart     Register auto-start on login
-echo   no-autostart  Remove auto-start
-echo   tampermonkey  Install Tampermonkey script
-echo   uninstall     Stop server and remove auto-start
-echo   status        Show server and autostart status
+echo   install         Full install (venv + deps + weights + autostart + start)
+echo   start           Start server
+echo   stop            Stop server
+echo   deps            Install dependencies only
+echo   weights         Download model weights only
+echo   autostart       Register auto-start on login
+echo   no-autostart    Remove auto-start
+echo   context-menu    Add Upscale to Explorer context menu
+echo   no-context-menu Remove Upscale from Explorer context menu
+echo   tampermonkey    Install Tampermonkey script
+echo   uninstall       Stop server and remove auto-start
+echo   status          Show server, autostart and context menu status
 exit /b 1
 
 :STATUS
-curl -sf --max-time 2 %SERVER_URL%/health >nul 2>&1 && echo Server: RUNNING (%SERVER_URL%) || echo Server: NOT RUNNING
+set SERVER_STATUS=NOT RUNNING
+curl -s --max-time 2 %SERVER_URL%/health 2>nul | findstr /C:"status" >nul && set SERVER_STATUS=RUNNING
+echo Server: %SERVER_STATUS% (%SERVER_URL%)
 schtasks /query /tn "UpscaleServer" >nul 2>&1 && echo Autostart: ENABLED || echo Autostart: DISABLED
+reg query "HKCR\SystemFileAssociations\.png\shell\upscale" >nul 2>&1 && echo Context Menu: ENABLED || echo Context Menu: DISABLED
 exit /b 0
 
 :MENU
@@ -62,17 +69,22 @@ echo ============================================
 echo.
 
 :: --- Server status check ---
-netstat -ano | findstr ":7869" | findstr "LISTENING" >nul 2>&1 && (
-    echo   Server: RUNNING (%SERVER_URL%)
-) || (
-    echo   Server: NOT RUNNING
-)
+set SERVER_STATUS=NOT RUNNING
+curl -s --max-time 2 %SERVER_URL%/health 2>nul | findstr /C:"status" >nul && set SERVER_STATUS=RUNNING
+echo   Server: %SERVER_STATUS% (%SERVER_URL%)
 
 :: --- Autostart status check ---
 schtasks /query /tn "UpscaleServer" >nul 2>&1 && (
     echo   Autostart: ENABLED
 ) || (
     echo   Autostart: DISABLED
+)
+
+:: --- Context menu status check ---
+reg query "HKCR\SystemFileAssociations\.png\shell\upscale" >nul 2>&1 && (
+    echo   Context Menu: ENABLED
+) || (
+    echo   Context Menu: DISABLED
 )
 echo.
 
@@ -85,6 +97,8 @@ echo   [6] Register auto-start on login
 echo   [7] Remove auto-start
 echo   [8] Install Tampermonkey script
 echo   [9] Uninstall (stop + remove autostart)
+echo   [A] Add Upscale to Explorer context menu
+echo   [B] Remove Upscale from Explorer context menu
 echo   [0] Exit
 echo.
 set /p CHOICE="Select an option: "
@@ -98,6 +112,8 @@ if "%CHOICE%"=="6" goto REGISTER_AUTOSTART
 if "%CHOICE%"=="7" goto REMOVE_AUTOSTART
 if "%CHOICE%"=="8" goto INSTALL_TM
 if "%CHOICE%"=="9" goto UNINSTALL
+if /i "%CHOICE%"=="A" goto INSTALL_CONTEXT_MENU
+if /i "%CHOICE%"=="B" goto REMOVE_CONTEXT_MENU
 if "%CHOICE%"=="0" exit /b 0
 
 echo Invalid option.
@@ -331,6 +347,53 @@ if !errorlevel! neq 0 (
 goto END_SECTION
 
 :: ============================================
+::  INSTALL EXPLORER CONTEXT MENU
+:: ============================================
+:INSTALL_CONTEXT_MENU
+cls
+echo ============================================
+echo   Add Upscale to Explorer Context Menu
+echo ============================================
+echo.
+
+set PS_SCRIPT=%SERVER_DIR%\upscale-file.ps1
+set EXTENSIONS=.png .jpg .jpeg .webp .bmp .tiff .tif
+
+for %%E in (%EXTENSIONS%) do (
+    echo   Registering %%E ...
+    reg add "HKCR\SystemFileAssociations\%%E\shell\upscale" /ve /d "Upscale (4x)" /f >nul 2>&1
+    reg add "HKCR\SystemFileAssociations\%%E\shell\upscale" /v Icon /d "%SERVER_DIR%\icon.ico,0" /f >nul 2>&1
+    reg add "HKCR\SystemFileAssociations\%%E\shell\upscale\command" /ve /d "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%PS_SCRIPT%\" \"%%1\"" /f >nul 2>&1
+)
+
+echo.
+echo Context menu registered for: %EXTENSIONS%
+echo.
+echo Right-click any supported image in Explorer to see "Upscale (4x)".
+goto END_SECTION
+
+:: ============================================
+::  REMOVE EXPLORER CONTEXT MENU
+:: ============================================
+:REMOVE_CONTEXT_MENU
+cls
+echo ============================================
+echo   Remove Upscale from Explorer Context Menu
+echo ============================================
+echo.
+
+set EXTENSIONS=.png .jpg .jpeg .webp .bmp .tiff .tif
+
+for %%E in (%EXTENSIONS%) do (
+    echo   Removing %%E ...
+    reg delete "HKCR\SystemFileAssociations\%%E\shell\upscale" /f >nul 2>&1
+)
+
+echo.
+echo Context menu removed.
+goto END_SECTION
+
+:: ============================================
 ::  INSTALL TAMPERMONKEY SCRIPT
 :: ============================================
 :INSTALL_TM
@@ -375,7 +438,7 @@ echo   Upscale Context Menu - Uninstall
 echo ============================================
 echo.
 
-echo [1/2] Stopping upscale server...
+echo [1/3] Stopping upscale server...
 taskkill /F /IM python.exe /FI "WINDOWTITLE eq *app.py*" >nul 2>&1
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":7869" ^| findstr "LISTENING"') do (
     taskkill /F /PID %%a >nul 2>&1
@@ -383,12 +446,20 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":7869" ^| findstr "LISTENING
 echo       Done.
 echo.
 
-echo [2/2] Removing auto-start task...
+echo [2/3] Removing auto-start task...
 schtasks /delete /tn "UpscaleServer" /f >nul 2>&1
 if errorlevel 1 (
     echo       No auto-start task found (already removed).
 ) else (
     echo       Auto-start removed.
+)
+echo       Done.
+echo.
+
+echo [3/3] Removing Explorer context menu...
+set EXTENSIONS=.png .jpg .jpeg .webp .bmp .tiff .tif
+for %%E in (%EXTENSIONS%) do (
+    reg delete "HKCR\SystemFileAssociations\%%E\shell\upscale" /f >nul 2>&1
 )
 echo       Done.
 echo.
