@@ -1,179 +1,179 @@
-# Upscale Context Menu
+# Context Upscale
 
-Right-click any image → **Upscale** → result opens in a new tab.
+Правый клик по любому изображению → **Увеличить** → результат открывается в новой вкладке.
 
-A lightweight toolset — Explorer context menu, Chrome extension, and Tampermonkey userscript — for upscaling images using a local GPU server powered by Real-ESRGAN 4x-UltraSharp. Browser clients send binary data (not URLs), avoiding double downloads and regional blocking issues.
+Лёгкий набор инструментов — контекстное меню Проводника, расширение Chrome и пользовательский скрипт Tampermonkey — для увеличения изображений с помощью локального GPU-сервера на базе Real-ESRGAN 4x-UltraSharp. Браузерные клиенты отправляют бинарные данные (не URL), что исключает двойную загрузку и проблемы с региональной блокировкой.
 
-## Features
+## Возможности
 
-- **Explorer Context Menu** — right-click any image file in Windows Explorer → Upscale (4x)
-- **Chrome Extension** — native context menu integration (MV3)
-- **Tampermonkey Userscript** — works in any browser with Tampermonkey
-- **Local GPU Server** — FastAPI + Real-ESRGAN on your own hardware
-- **Lazy Model Loading** — model loads on first request, unloads from VRAM after 5 min idle
-- **Tiled Upscaling** — handles large images without OOM
-- **Zero Cloud Dependencies** — everything runs locally
+- **Контекстное меню Проводника** — правый клик по любому файлу изображения в Проводнике Windows → Увеличить (4x)
+- **Расширение Chrome** — нативная интеграция в контекстное меню (MV3)
+- **Скрипт Tampermonkey** — работает в любом браузере с Tampermonkey
+- **Локальный GPU-сервер** — FastAPI + Real-ESRGAN на вашем железе
+- **Ленивая загрузка модели** — модель загружается при первом запросе, выгружается из VRAM после 5 мин простоя
+- **Мозаичное увеличение** — обработка больших изображений без OOM
+- **Без облачных зависимостей** — всё работает локально
 
-## Architecture
+## Архитектура
 
 ```
 ┌─────────────────┐   multipart/form   ┌──────────────────┐
-│  Explorer Menu  │ ── POST /upscale ─→ │                  │
-│  Chrome Ext /   │ ── POST /upscale ─→ │  FastAPI Server   │
-│  Tampermonkey   │ ←── JPEG result ── │  Real-ESRGAN 4x   │
-└─────────────────┘                     │  localhost:7869   │
+│ Меню Проводника │ ── POST /upscale ─→ │                  │
+│ Расширение /    │ ── POST /upscale ─→ │  Сервер FastAPI  │
+│ Tampermonkey    │ ←── JPEG результат │  Real-ESRGAN 4x  │
+└─────────────────┘                     │  localhost:7869  │
                                         └──────────────────┘
 ```
 
-- Browser extracts the image directly from the page (no re-download)
-- Binary data is sent to the local server via `multipart/form-data`
-- Server upscales on GPU and returns a JPEG
-- Model auto-unloads from VRAM after idle timeout (`torch.cuda.empty_cache()`)
-- Server uses ~30 MB RAM when idle, GPU is free
+- Браузер извлекает изображение прямо со страницы (без повторной загрузки)
+- Бинарные данные отправляются на локальный сервер через `multipart/form-data`
+- Сервер увеличивает изображение на GPU и возвращает JPEG
+- Модель автоматически выгружается из VRAM после таймаута простоя (`torch.cuda.empty_cache()`)
+- Сервер использует ~30 МБ ОЗУ в простое, GPU свободен
 
-## Requirements
+## Требования
 
 - Windows 10/11
-- NVIDIA GPU with CUDA support (RTX 30xx/40xx recommended)
-- NVIDIA Driver ≥ 530.xx
-- Chrome or Chromium-based browser (for extension)
-- Tampermonkey extension (for userscript alternative)
-- ~4 GB free disk space (PyTorch + CUDA + model weights)
+- NVIDIA GPU с поддержкой CUDA (рекомендуется RTX 30xx/40xx)
+- Драйвер NVIDIA ≥ 530.xx
+- Chrome или браузер на базе Chromium (для расширения)
+- Расширение Tampermonkey (альтернативный вариант)
+- ~4 ГБ свободного места на диске (PyTorch + CUDA + веса модели)
 
-## Installation
+## Установка
 
-### 1. Server
+### 1. Сервер
 
-Run `manage.bat` (automatically requests admin privileges):
+Запустите `manage.bat` (автоматически запрашивает права администратора):
 
 ```bat
 manage.bat
 ```
 
-Select option **[1] Full install**. This will:
-- Create a virtual environment in `server/.venv`
-- Install PyTorch with CUDA 12.1 and all dependencies
-- Download 4x-UltraSharp weights (~64 MB)
-- Register the server for autostart on Windows login
+Выберите пункт **[1] Полная установка**. Будет выполнено:
+- Создание виртуального окружения в `server/.venv`
+- Установка PyTorch с CUDA 12.1 и всех зависимостей
+- Загрузка весов 4x-UltraSharp (~64 МБ)
+- Регистрация автозапуска сервера при входе в Windows
 
-The server runs silently in the background. To restart manually: `server/run-now.bat`
+Сервер работает в фоне. Для ручного перезапуска: `server/run-now.bat`
 
-### 2a. Explorer Context Menu (Optional)
+### 2а. Контекстное меню Проводника (опционально)
 
-Run `manage.bat` → option **[A] Add Upscale to Explorer context menu**.
+Запустите `manage.bat` → пункт **[A] Добавить «Увеличить» в контекстное меню Проводника**.
 
-This registers "Upscale (4x)" in the right-click menu for `.png`, `.jpg`, `.jpeg`, `.webp`, `.bmp`, `.tiff`, `.tif` files. The upscaled result opens in your default browser. To remove: option **[B]** or `manage.bat no-context-menu`.
+Регистрирует пункт «Увеличить (4x)» в контекстном меню для файлов `.png`, `.jpg`, `.jpeg`, `.webp`, `.bmp`, `.tiff`, `.tif`. Результат открывается в браузере по умолчанию. Для удаления: пункт **[B]** или `manage.bat no-context-menu`.
 
-### 2b. Chrome Extension
+### 2б. Расширение Chrome
 
-1. Open `chrome://extensions`
-2. Enable **Developer mode** (toggle in top-right)
-3. Click **Load unpacked**
-4. Select the `extension` folder from this project
+1. Откройте `chrome://extensions`
+2. Включите **Режим разработчика** (переключатель справа сверху)
+3. Нажмите **Загрузить распакованное расширение**
+4. Выберите папку `extension` из этого проекта
 
-Done. Right-click any image to see the **Upscale** menu item.
+Готово. Правый клик по любому изображению покажет пункт **Увеличить**.
 
-### 2c. Tampermonkey Userscript (Alternative)
+### 2в. Скрипт Tampermonkey (альтернатива)
 
-1. Install [Tampermonkey](https://www.tampermonkey.net/)
-2. Run `manage.bat` → option **[8] Install Tampermonkey script**
-3. Or manually install from `tampermonkey/dist/upscale.user.js`
+1. Установите [Tampermonkey](https://www.tampermonkey.net/)
+2. Запустите `manage.bat` → пункт **[8] Установить скрипт Tampermonkey**
+3. Или установите вручную из `tampermonkey/dist/upscale.user.js`
 
-> **Note:** The userscript tracks the last hovered image via `mouseover`. Hover over an image before selecting the menu command. When the context menu is open, mouse events are blocked by the browser, so the target won't change accidentally.
+> **Примечание:** Скрипт отслеживает последнее наведённое изображение через `mouseover`. Наведите курсор на изображение перед выбором команды меню. Когда контекстное меню открыто, события мыши блокируются браузером, поэтому цель не изменится случайно.
 
-## Usage
+## Использование
 
-| Action | Result |
+| Действие | Результат |
 |---|---|
-| Right-click image → **Upscale** | Opens upscaled image in new tab |
-| First upscale after idle | ~2-3s (model loading into VRAM) |
-| Subsequent upscales | Near-instant |
-| Server health check | `GET http://127.0.0.1:7869/health` |
+| Правый клик по изображению → **Увеличить** | Открытие увеличенного изображения в новой вкладке |
+| Первое увеличение после простоя | ~2-3 сек (загрузка модели в VRAM) |
+| Последующие увеличения | Мгновенно |
+| Проверка состояния сервера | `GET http://127.0.0.1:7869/health` |
 
-## Management
+## Управление
 
-### Interactive Menu
+### Интерактивное меню
 
-Run `manage.bat` without arguments:
+Запустите `manage.bat` без аргументов:
 
-| Option | Action |
+| Пункт | Действие |
 |---|---|
-| [1] | Full install (venv + deps + weights + autostart + start) |
-| [2] | Start server |
-| [3] | Stop server |
-| [4] | Install dependencies |
-| [5] | Download model weights |
-| [6] | Enable autostart |
-| [7] | Disable autostart |
-| [8] | Install Tampermonkey script |
-| [9] | Uninstall (stop + disable autostart + remove context menu) |
-| [A] | Add Upscale to Explorer context menu |
-| [B] | Remove Upscale from Explorer context menu |
+| [1] | Полная установка (venv + зависимости + веса + автозапуск + старт) |
+| [2] | Запустить сервер |
+| [3] | Остановить сервер |
+| [4] | Установить зависимости |
+| [5] | Загрузить веса модели |
+| [6] | Включить автозапуск |
+| [7] | Отключить автозапуск |
+| [8] | Установить скрипт Tampermonkey |
+| [9] | Удалить (остановка + отключение автозапуска + удаление контекстного меню) |
+| [A] | Добавить «Увеличить» в контекстное меню Проводника |
+| [B] | Удалить «Увеличить» из контекстного меню Проводника |
 
-### CLI Mode
+### Режим командной строки
 
 ```bat
-manage.bat start         # Start server
-manage.bat stop          # Stop server
-manage.bat status        # Server & autostart status
-manage.bat install       # Full installation
-manage.bat deps          # Install Python dependencies
-manage.bat weights       # Download model weights
-manage.bat autostart     # Enable autostart
-manage.bat no-autostart  # Disable autostart
-manage.bat tampermonkey    # Build & install Tampermonkey script
-manage.bat context-menu    # Add Explorer context menu
-manage.bat no-context-menu # Remove Explorer context menu
-manage.bat uninstall       # Stop + disable autostart + remove context menu
+manage.bat start         # Запустить сервер
+manage.bat stop          # Остановить сервер
+manage.bat status        # Статус сервера и автозапуска
+manage.bat install       # Полная установка
+manage.bat deps          # Установить зависимости Python
+manage.bat weights       # Загрузить веса модели
+manage.bat autostart     # Включить автозапуск
+manage.bat no-autostart  # Отключить автозапуск
+manage.bat tampermonkey    # Собрать и установить скрипт Tampermonkey
+manage.bat context-menu    # Добавить контекстное меню Проводника
+manage.bat no-context-menu # Удалить контекстное меню Проводника
+manage.bat uninstall       # Остановка + отключение автозапуска + удаление контекстного меню
 ```
 
-## Project Structure
+## Структура проекта
 
 ```
 context-upscale/
-├── extension/              # Chrome extension (MV3)
+├── extension/              # Расширение Chrome (MV3)
 │   ├── manifest.json
-│   ├── background.js       # Context menu + fetch + POST
-│   └── content.js          # Toast notifications + result display
-├── tampermonkey/           # Tampermonkey userscript
-│   ├── entry.js            # Script source (Vite entry point)
-│   └── dist/               # Built userscript
-├── lib/                    # Shared logic (used by both clients)
-│   └── upscale.js          # Health check + upscale API client
-├── server/                 # Python GPU server
+│   ├── background.js       # Контекстное меню + fetch + POST
+│   └── content.js          # Уведомления + отображение результата
+├── tampermonkey/           # Скрипт Tampermonkey
+│   ├── entry.js            # Исходный код скрипта (точка входа Vite)
+│   └── dist/               # Собранный скрипт
+├── lib/                    # Общая логика (используется обоими клиентами)
+│   └── upscale.js          # Проверка здоровья + клиент API увеличения
+├── server/                 # Python GPU-сервер
 │   ├── app.py              # FastAPI + Real-ESRGAN
-│   ├── upscale-file.ps1    # Explorer context menu handler
+│   ├── upscale-file.ps1    # Обработчик контекстного меню Проводника
 │   ├── requirements.txt
-│   ├── run-now.bat         # Restart server (hidden)
-│   ├── start-silent.vbs    # Silent launch wrapper
-│   └── weights/            # Model weights (gitignored)
-├── manage.bat              # Unified management tool
-├── vite.config.tm.js       # Vite config for Tampermonkey build
+│   ├── run-now.bat         # Перезапуск сервера (скрытый)
+│   ├── start-silent.vbs    # Обёртка тихого запуска
+│   └── weights/            # Веса модели (игнорируется в git)
+├── manage.bat              # Единый инструмент управления
+├── vite.config.tm.js       # Конфигурация Vite для сборки Tampermonkey
 └── package.json
 ```
 
-## Troubleshooting
+## Устранение неполадок
 
-**"Upscale server is not running"**
-→ Run `server/run-now.bat`. Check status: `curl http://127.0.0.1:7869/health`. Logs: `server/server.log`
+**«Сервер увеличения не запущен»**
+→ Запустите `server/run-now.bat`. Проверьте статус: `curl http://127.0.0.1:7869/health`. Логи: `server/server.log`
 
-**Health shows `device: cpu`**
-→ Reinstall PyTorch with CUDA:
+**Health показывает `device: cpu`**
+→ Переустановите PyTorch с CUDA:
 ```bat
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121 --force-reinstall
 ```
 
-**Slow first upscale**
-→ Expected: model loads into VRAM on first request (~2-3s). Subsequent requests are instant.
+**Медленное первое увеличение**
+→ Ожидаемо: модель загружается в VRAM при первом запросе (~2-3 сек). Последующие запросы мгновенны.
 
-**Tampermonkey: "Tainted canvas" error**
-→ Normal fallback behavior. The script tries canvas extraction first, then falls back to `fetch()` in page context.
+**Tampermonkey: ошибка «Tainted canvas»**
+→ Нормальное поведение фолбэка. Скрипт сначала пытается извлечь через canvas, затем переключается на `fetch()` в контексте страницы.
 
-**Want to completely remove**
-1. Run `manage.bat` → option [9]
-2. Remove extension in `chrome://extensions`
-3. Delete project folder
+**Полное удаление**
+1. Запустите `manage.bat` → пункт [9]
+2. Удалите расширение в `chrome://extensions`
+3. Удалите папку проекта
 
-## License
+## Лицензия
 
 MIT

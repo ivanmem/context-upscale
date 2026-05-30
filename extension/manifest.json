@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Апскейл изображений",
+  "name": "Увеличить изображение",
   "version": "1.0.0",
-  "description": "Апскейл картинок через контекстное меню с помощью локального GPU-сервера",
+  "description": "Увеличение изображений через контекстное меню с помощью локального GPU-сервера",
   "permissions": ["contextMenus", "activeTab"],
   "host_permissions": ["http://127.0.0.1:7869/*"],
   "background": {

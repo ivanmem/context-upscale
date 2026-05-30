@@ -88,11 +88,11 @@ document.addEventListener("mouseover", (e) => {
 
 // --- Menu command ---
 
-GM_registerMenuCommand("Апскейлнуть изображение под курсором", async () => {
+GM_registerMenuCommand("Увеличить изображение под курсором", async () => {
   const img = lastHoveredImg;
 
   if (!img || !img.src) {
-    showToast("⚠️ Апскейл: Наведите курсор на изображение перед вызовом команды", "#d32f2f");
+    showToast("⚠️ Увеличение: Наведите курсор на изображение перед вызовом команды", "#d32f2f");
     return;
   }
 
@@ -115,9 +115,9 @@ GM_registerMenuCommand("Апскейлнуть изображение под к�
     let message = err instanceof Error ? err.message : String(err);
 
     if (message.includes("Server not available") || message.includes("Failed to fetch")) {
-      message = "Сервер апскейла не запущен. Запустите server/start.bat";
+      message = "Сервер увеличения не запущен. Запустите manage.bat start";
     }
 
-    showToast("⚠️ Апскейл: " + message, "#d32f2f");
+    showToast("⚠️ Увеличение: " + message, "#d32f2f");
   }
 });

@@ -1,7 +1,8 @@
 @echo off
-:: Skip elevation check if already elevated (passed as argument)
+chcp 65001 >nul 2>&1
+:: Пропуск проверки прав, если уже повышены (передано как аргумент)
 if "%~1"=="--elevated" goto :ELEVATED
-:: Auto-elevate to admin if not already
+:: Автоповышение до администратора, если ещё не повышено
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     powershell -NoProfile -Command "Start-Process cmd -ArgumentList '/k \"%~f0\" --elevated' -Verb RunAs"
@@ -16,12 +17,12 @@ set VENV_DIR=%SERVER_DIR%\.venv
 set WEIGHTS_FILE=%SERVER_DIR%\weights\4x-UltraSharp.pth
 set SERVER_URL=http://127.0.0.1:7869
 
-:: --- CLI argument handling ---
+:: --- Обработка CLI-аргументов ---
 set CLI_MODE=0
 if "%~1"=="" goto MENU
 if "%~1"=="--elevated" goto MENU
 set CLI_MODE=1
-:: In CLI mode: exit after each command. In interactive: pause + menu.
+:: В CLI-режиме: выход после каждой команды. В интерактивном: пауза + меню.
 if /i "%~1"=="install" goto FULL_INSTALL
 if /i "%~1"=="start" goto START_SERVER
 if /i "%~1"=="stop" goto STOP_SERVER
@@ -34,74 +35,74 @@ if /i "%~1"=="context-menu" goto INSTALL_CONTEXT_MENU
 if /i "%~1"=="no-context-menu" goto REMOVE_CONTEXT_MENU
 if /i "%~1"=="uninstall" goto UNINSTALL
 if /i "%~1"=="status" goto STATUS
-echo Unknown command: %~1
+echo Неизвестная команда: %~1
 echo.
-echo Usage: manage.bat [command]
+echo Использование: manage.bat [команда]
 echo.
-echo Commands:
-echo   install         Full install (venv + deps + weights + autostart + start)
-echo   start           Start server
-echo   stop            Stop server
-echo   deps            Install dependencies only
-echo   weights         Download model weights only
-echo   autostart       Register auto-start on login
-echo   no-autostart    Remove auto-start
-echo   context-menu    Add Upscale to Explorer context menu
-echo   no-context-menu Remove Upscale from Explorer context menu
-echo   tampermonkey    Install Tampermonkey script
-echo   uninstall       Stop server and remove auto-start
-echo   status          Show server, autostart and context menu status
+echo Команды:
+echo   install         Полная установка (venv + зависимости + веса + автозапуск + старт)
+echo   start           Запустить сервер
+echo   stop            Остановить сервер
+echo   deps            Установить только зависимости
+echo   weights         Загрузить только веса модели
+echo   autostart       Зарегистрировать автозапуск при входе
+echo   no-autostart    Удалить автозапуск
+echo   context-menu    Добавить «Увеличить» в контекстное меню Проводника
+echo   no-context-menu Удалить «Увеличить» из контекстного меню Проводника
+echo   tampermonkey    Установить скрипт Tampermonkey
+echo   uninstall       Остановить сервер и удалить автозапуск
+echo   status          Показать статус сервера, автозапуска и контекстного меню
 exit /b 1
 
 :STATUS
-set SERVER_STATUS=NOT RUNNING
-curl -s --max-time 2 %SERVER_URL%/health 2>nul | findstr /C:"status" >nul && set SERVER_STATUS=RUNNING
-echo Server: %SERVER_STATUS% (%SERVER_URL%)
-schtasks /query /tn "UpscaleServer" >nul 2>&1 && echo Autostart: ENABLED || echo Autostart: DISABLED
-reg query "HKCR\SystemFileAssociations\.png\shell\upscale" >nul 2>&1 && echo Context Menu: ENABLED || echo Context Menu: DISABLED
+set SERVER_STATUS=НЕ ЗАПУЩЕН
+curl -s --max-time 2 %SERVER_URL%/health 2>nul | findstr /C:"status" >nul && set SERVER_STATUS=ЗАПУЩЕН
+echo Сервер: %SERVER_STATUS% (%SERVER_URL%)
+schtasks /query /tn "UpscaleServer" >nul 2>&1 && echo Автозапуск: ВКЛЮЧЁН || echo Автозапуск: ОТКЛЮЧЁН
+reg query "HKCR\SystemFileAssociations\.png\shell\upscale" >nul 2>&1 && echo Контекстное меню: ВКЛЮЧЕНО || echo Контекстное меню: ОТКЛЮЧЕНО
 exit /b 0
 
 :MENU
 cls
 echo ============================================
-echo   Upscale Context Menu - Manager
+echo   Upscale Context Menu - Менеджер
 echo ============================================
 echo.
 
-:: --- Server status check ---
-set SERVER_STATUS=NOT RUNNING
-curl -s --max-time 2 %SERVER_URL%/health 2>nul | findstr /C:"status" >nul && set SERVER_STATUS=RUNNING
-echo   Server: %SERVER_STATUS% (%SERVER_URL%)
+:: --- Проверка статуса сервера ---
+set SERVER_STATUS=НЕ ЗАПУЩЕН
+curl -s --max-time 2 %SERVER_URL%/health 2>nul | findstr /C:"status" >nul && set SERVER_STATUS=ЗАПУЩЕН
+echo   Сервер: %SERVER_STATUS% (%SERVER_URL%)
 
-:: --- Autostart status check ---
+:: --- Проверка статуса автозапуска ---
 schtasks /query /tn "UpscaleServer" >nul 2>&1 && (
-    echo   Autostart: ENABLED
+    echo   Автозапуск: ВКЛЮЧЁН
 ) || (
-    echo   Autostart: DISABLED
+    echo   Автозапуск: ОТКЛЮЧЁН
 )
 
-:: --- Context menu status check ---
+:: --- Проверка статуса контекстного меню ---
 reg query "HKCR\SystemFileAssociations\.png\shell\upscale" >nul 2>&1 && (
-    echo   Context Menu: ENABLED
+    echo   Контекстное меню: ВКЛЮЧЕНО
 ) || (
-    echo   Context Menu: DISABLED
+    echo   Контекстное меню: ОТКЛЮЧЕНО
 )
 echo.
 
-echo   [1] Full install (venv + deps + weights + autostart + start)
-echo   [2] Start server
-echo   [3] Stop server
-echo   [4] Install dependencies only
-echo   [5] Download model weights only
-echo   [6] Register auto-start on login
-echo   [7] Remove auto-start
-echo   [8] Install Tampermonkey script
-echo   [9] Uninstall (stop + remove autostart)
-echo   [A] Add Upscale to Explorer context menu
-echo   [B] Remove Upscale from Explorer context menu
-echo   [0] Exit
+echo   [1] Полная установка (venv + зависимости + веса + автозапуск + старт)
+echo   [2] Запустить сервер
+echo   [3] Остановить сервер
+echo   [4] Установить только зависимости
+echo   [5] Загрузить только веса модели
+echo   [6] Зарегистрировать автозапуск при входе
+echo   [7] Удалить автозапуск
+echo   [8] Установить скрипт Tampermonkey
+echo   [9] Удалить (остановка + удаление автозапуска)
+echo   [A] Добавить «Увеличить» в контекстное меню Проводника
+echo   [B] Удалить «Увеличить» из контекстного меню Проводника
+echo   [0] Выход
 echo.
-set /p CHOICE="Select an option: "
+set /p CHOICE="Выберите пункт: "
 
 if "%CHOICE%"=="1" goto FULL_INSTALL
 if "%CHOICE%"=="2" goto START_SERVER
@@ -116,75 +117,75 @@ if /i "%CHOICE%"=="A" goto INSTALL_CONTEXT_MENU
 if /i "%CHOICE%"=="B" goto REMOVE_CONTEXT_MENU
 if "%CHOICE%"=="0" exit /b 0
 
-echo Invalid option.
+echo Неверный пункт.
 timeout /t 2 /nobreak >nul
 goto MENU
 
 :: ============================================
-::  FULL INSTALL
+::  ПОЛНАЯ УСТАНОВКА
 :: ============================================
 :FULL_INSTALL
 cls
 echo ============================================
-echo   Full Installation
+echo   Полная установка
 echo ============================================
 echo.
 
-echo [1/5] Creating virtual environment...
+echo [1/5] Создание виртуального окружения...
 if not exist "%VENV_DIR%" (
     python -m venv "%VENV_DIR%"
     if errorlevel 1 (
-        echo ERROR: Failed to create venv. Make sure Python 3.10+ is installed.
+        echo ОШИБКА: Не удалось создать venv. Убедитесь, что Python 3.10+ установлен.
         goto END_SECTION
     )
 )
 call "%VENV_DIR%\Scripts\activate.bat"
-echo       Done.
+echo       Готово.
 echo.
 
-echo [2/5] Installing PyTorch with CUDA 12.1...
+echo [2/5] Установка PyTorch с CUDA 12.1...
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121 --quiet
 if errorlevel 1 (
-    echo WARNING: CUDA PyTorch install failed. Trying CPU version...
+    echo ПРЕДУПРЕЖДЕНИЕ: Не удалось установить PyTorch с CUDA. Попытка установки CPU-версии...
     pip install torch torchvision --quiet
 )
 
-echo       Installing server dependencies...
+echo       Установка зависимостей сервера...
 pip install -r "%SERVER_DIR%\requirements.txt" --quiet
 if errorlevel 1 (
-    echo ERROR: Failed to install dependencies.
+    echo ОШИБКА: Не удалось установить зависимости.
     goto END_SECTION
 )
-echo       Done.
+echo       Готово.
 echo.
 
-echo [3/5] Checking model weights...
+echo [3/5] Проверка весов модели...
 if not exist "%WEIGHTS_FILE%" (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%SERVER_DIR%\download_weights.ps1"
     if errorlevel 1 (
-        echo ERROR: Failed to download weights.
-        echo        Download manually: https://huggingface.co/Kim2091/UltraSharp/resolve/main/4x-UltraSharp.pth
-        echo        Place in: %SERVER_DIR%\weights\
+        echo ОШИБКА: Не удалось загрузить веса.
+        echo        Загрузите вручную: https://huggingface.co/Kim2091/UltraSharp/resolve/main/4x-UltraSharp.pth
+        echo        Поместите в: %SERVER_DIR%\weights\
         goto END_SECTION
     )
 ) else (
-    echo       Weights already present.
+    echo       Веса уже присутствуют.
 )
-echo       Done.
+echo       Готово.
 echo.
 
-echo [4/5] Registering auto-start on login...
+echo [4/5] Регистрация автозапуска при входе...
 set VBS_PATH=%SERVER_DIR%\start-silent.vbs
 schtasks /create /tn "UpscaleServer" /tr "wscript.exe \"%VBS_PATH%\"" /sc onlogon /rl limited /f
 if !errorlevel! neq 0 (
-    echo       WARNING: Could not register auto-start.
+    echo       ПРЕДУПРЕЖДЕНИЕ: Не удалось зарегистрировать автозапуск.
 ) else (
-    echo       Auto-start registered.
+    echo       Автозапуск зарегистрирован.
 )
-echo       Done.
+echo       Готово.
 echo.
 
-echo [5/5] Starting upscale server...
+echo [5/5] Запуск сервера увеличения...
 call "%SERVER_DIR%\run-now.bat"
 set /a TRIES=0
 :WAIT_LOOP_FULL
@@ -194,33 +195,33 @@ curl -s --max-time 2 %SERVER_URL%/health >nul 2>&1 && goto SERVER_OK_FULL
 set /a TRIES+=1
 goto WAIT_LOOP_FULL
 :SERVER_OK_FULL
-echo       Server is running on %SERVER_URL%
-echo       Done.
+echo       Сервер запущен на %SERVER_URL%
+echo       Готово.
 goto FULL_END
 :WAIT_DONE_FULL
-echo       WARNING: Server did not respond within 15s.
-echo       Check server\server.log for errors.
-echo       Done.
+echo       ПРЕДУПРЕЖДЕНИЕ: Сервер не ответил в течение 15 сек.
+echo       Проверьте ошибки в server\server.log.
+echo       Готово.
 :FULL_END
 echo.
 echo ============================================
-echo   Full installation complete!
+echo   Полная установка завершена!
 echo ============================================
 echo.
-echo Next step: Install the Chrome extension:
-echo   1. Open chrome://extensions
-echo   2. Enable "Developer mode" (top right)
-echo   3. Click "Load unpacked"
-echo   4. Select: %PROJECT_DIR%extension
+echo Следующий шаг: Установите расширение Chrome:
+echo   1. Откройте chrome://extensions
+echo   2. Включите «Режим разработчика» (справа сверху)
+echo   3. Нажмите «Загрузить распакованное расширение»
+echo   4. Выберите: %PROJECT_DIR%extension
 echo.
 goto END_SECTION
 
 :: ============================================
-::  START SERVER
+::  ЗАПУСК СЕРВЕРА
 :: ============================================
 :START_SERVER
 cls
-echo Starting server...
+echo Запуск сервера...
 call "%SERVER_DIR%\run-now.bat"
 set /a TRIES=0
 :WAIT_LOOP_START
@@ -230,78 +231,78 @@ curl -s --max-time 2 %SERVER_URL%/health >nul 2>&1 && goto SERVER_OK_START
 set /a TRIES+=1
 goto WAIT_LOOP_START
 :SERVER_OK_START
-echo Server is running on %SERVER_URL%
+echo Сервер запущен на %SERVER_URL%
 goto START_END
 :WAIT_DONE_START
-echo WARNING: Server did not respond within 15s.
-echo Check server\server.log for errors.
+echo ПРЕДУПРЕЖДЕНИЕ: Сервер не ответил в течение 15 сек.
+echo Проверьте ошибки в server\server.log.
 :START_END
 goto END_SECTION
 
 :: ============================================
-::  STOP SERVER
+::  ОСТАНОВКА СЕРВЕРА
 :: ============================================
 :STOP_SERVER
 cls
-echo Stopping server...
+echo Остановка сервера...
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr :7869 ^| findstr LISTENING') do (
     taskkill /F /PID %%a >nul 2>&1
 )
-echo Server stopped.
+echo Сервер остановлен.
 goto END_SECTION
 
 :: ============================================
-::  INSTALL DEPENDENCIES
+::  УСТАНОВКА ЗАВИСИМОСТЕЙ
 :: ============================================
 :INSTALL_DEPS
 cls
 echo ============================================
-echo   Installing Dependencies
+echo   Установка зависимостей
 echo ============================================
 echo.
 
 if not exist "%VENV_DIR%" (
-    echo Creating virtual environment...
+    echo Создание виртуального окружения...
     python -m venv "%VENV_DIR%"
     if errorlevel 1 (
-        echo ERROR: Failed to create venv. Make sure Python 3.10+ is installed.
+        echo ОШИБКА: Не удалось создать venv. Убедитесь, что Python 3.10+ установлен.
         goto END_SECTION
     )
 )
 call "%VENV_DIR%\Scripts\activate.bat"
 
-echo Installing PyTorch with CUDA 12.1...
+echo Установка PyTorch с CUDA 12.1...
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121 --quiet
 if errorlevel 1 (
-    echo WARNING: CUDA PyTorch install failed. Trying CPU version...
+    echo ПРЕДУПРЕЖДЕНИЕ: Не удалось установить PyTorch с CUDA. Попытка установки CPU-версии...
     pip install torch torchvision --quiet
 )
 
-echo Installing server dependencies...
+echo Установка зависимостей сервера...
 pip install -r "%SERVER_DIR%\requirements.txt" --quiet
 if errorlevel 1 (
-    echo ERROR: Failed to install dependencies.
+    echo ОШИБКА: Не удалось установить зависимости.
     goto END_SECTION
 )
 
-echo Done.
+echo Готово.
 goto END_SECTION
 
 :: ============================================
-::  DOWNLOAD WEIGHTS
+::  ЗАГРУЗКА ВЕСОВ
 :: ============================================
 :DOWNLOAD_WEIGHTS
 cls
 echo ============================================
-echo   Downloading Model Weights
+echo   Загрузка весов модели
 echo ============================================
 echo.
 
 if exist "%WEIGHTS_FILE%" (
-    echo Weights already present at:
+    echo Веса уже присутствуют:
     echo   %WEIGHTS_FILE%
     echo.
-    set /p RE_DOWNLOAD="Re-download? (y/N): "
+    set /p RE_DOWNLOAD="Загрузить повторно? (y/N): "
     if /i "!RE_DOWNLOAD!" neq "y" (
         goto END_SECTION
     )
@@ -310,49 +311,49 @@ if exist "%WEIGHTS_FILE%" (
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SERVER_DIR%\download_weights.ps1"
 if errorlevel 1 (
-    echo ERROR: Failed to download weights.
-    echo        Download manually: https://huggingface.co/Kim2091/UltraSharp/resolve/main/4x-UltraSharp.pth
-    echo        Place in: %SERVER_DIR%\weights\
+    echo ОШИБКА: Не удалось загрузить веса.
+    echo        Загрузите вручную: https://huggingface.co/Kim2091/UltraSharp/resolve/main/4x-UltraSharp.pth
+    echo        Поместите в: %SERVER_DIR%\weights\
 )
 echo.
 goto END_SECTION
 
 :: ============================================
-::  REGISTER AUTOSTART
+::  РЕГИСТРАЦИЯ АВТОЗАПУСКА
 :: ============================================
 :REGISTER_AUTOSTART
 cls
-echo Registering auto-start on login...
+echo Регистрация автозапуска при входе...
 set VBS_PATH=%SERVER_DIR%\start-silent.vbs
 schtasks /create /tn "UpscaleServer" /tr "wscript.exe \"%VBS_PATH%\"" /sc onlogon /rl limited /f
 if !errorlevel! neq 0 (
-    echo ERROR: Could not register auto-start. Make sure you run as admin.
+    echo ОШИБКА: Не удалось зарегистрировать автозапуск. Убедитесь, что запущено от имени администратора.
 ) else (
-    echo Auto-start registered successfully.
+    echo Автозапуск успешно зарегистрирован.
 )
 goto END_SECTION
 
 :: ============================================
-::  REMOVE AUTOSTART
+::  УДАЛЕНИЕ АВТОЗАПУСКА
 :: ============================================
 :REMOVE_AUTOSTART
 cls
-echo Removing auto-start...
+echo Удаление автозапуска...
 schtasks /delete /tn "UpscaleServer" /f
 if !errorlevel! neq 0 (
-    echo WARNING: Auto-start task was not found or could not be removed.
+    echo ПРЕДУПРЕЖДЕНИЕ: Задача автозапуска не найдена или не может быть удалена.
 ) else (
-    echo Auto-start removed.
+    echo Автозапуск удалён.
 )
 goto END_SECTION
 
 :: ============================================
-::  INSTALL EXPLORER CONTEXT MENU
+::  УСТАНОВКА КОНТЕКСТНОГО МЕНЮ ПРОВОДНИКА
 :: ============================================
 :INSTALL_CONTEXT_MENU
 cls
 echo ============================================
-echo   Add Upscale to Explorer Context Menu
+echo   Добавление «Увеличить» в контекстное меню Проводника
 echo ============================================
 echo.
 
@@ -360,126 +361,126 @@ set PS_SCRIPT=%SERVER_DIR%\upscale-file.ps1
 set EXTENSIONS=.png .jpg .jpeg .webp .bmp .tiff .tif
 
 for %%E in (%EXTENSIONS%) do (
-    echo   Registering %%E ...
-    reg add "HKCR\SystemFileAssociations\%%E\shell\upscale" /ve /d "Upscale (4x)" /f >nul 2>&1
+    echo   Регистрация %%E ...
+    reg add "HKCR\SystemFileAssociations\%%E\shell\upscale" /ve /d "Увеличить (4x)" /f >nul 2>&1
     reg add "HKCR\SystemFileAssociations\%%E\shell\upscale" /v Icon /d "%SERVER_DIR%\icon.ico,0" /f >nul 2>&1
     reg add "HKCR\SystemFileAssociations\%%E\shell\upscale\command" /ve /d "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%PS_SCRIPT%\" \"%%1\"" /f >nul 2>&1
 )
 
 echo.
-echo Context menu registered for: %EXTENSIONS%
+echo Контекстное меню зарегистрировано для: %EXTENSIONS%
 echo.
-echo Right-click any supported image in Explorer to see "Upscale (4x)".
+echo Правый клик по любому поддерживаемому изображению в Проводнике покажет «Увеличить (4x)».
 goto END_SECTION
 
 :: ============================================
-::  REMOVE EXPLORER CONTEXT MENU
+::  УДАЛЕНИЕ КОНТЕКСТНОГО МЕНЮ ПРОВОДНИКА
 :: ============================================
 :REMOVE_CONTEXT_MENU
 cls
 echo ============================================
-echo   Remove Upscale from Explorer Context Menu
+echo   Удаление «Увеличить» из контекстного меню Проводника
 echo ============================================
 echo.
 
 set EXTENSIONS=.png .jpg .jpeg .webp .bmp .tiff .tif
 
 for %%E in (%EXTENSIONS%) do (
-    echo   Removing %%E ...
+    echo   Удаление %%E ...
     reg delete "HKCR\SystemFileAssociations\%%E\shell\upscale" /f >nul 2>&1
 )
 
 echo.
-echo Context menu removed.
+echo Контекстное меню удалено.
 goto END_SECTION
 
 :: ============================================
-::  INSTALL TAMPERMONKEY SCRIPT
+::  УСТАНОВКА СКРИПТА TAMPERMONKEY
 :: ============================================
 :INSTALL_TM
 cls
 echo ============================================
-echo   Install Tampermonkey Script
+echo   Установка скрипта Tampermonkey
 echo ============================================
 echo.
 
-echo Building Tampermonkey script with Vite...
+echo Сборка скрипта Tampermonkey через Vite...
 call npm run build:tm
 if errorlevel 1 (
-    echo ERROR: Build failed. Make sure Node.js and npm are installed.
-    echo        Run: npm install
+    echo ОШИБКА: Сборка не удалась. Убедитесь, что Node.js и npm установлены.
+    echo        Выполните: npm install
     goto END_SECTION
 )
-echo       Done.
+echo       Готово.
 echo.
 
 set TM_SCRIPT=%PROJECT_DIR%tampermonkey\dist\upscale.user.js
 
 if not exist "%TM_SCRIPT%" (
-    echo ERROR: Built script not found at %TM_SCRIPT%
+    echo ОШИБКА: Собранный скрипт не найден: %TM_SCRIPT%
     goto END_SECTION
 )
 
 set TM_URL=file:///%TM_SCRIPT:\=/%
-echo Open this URL in your browser to install the script:
+echo Откройте эту ссылку в браузере для установки скрипта:
 echo   %TM_URL%
 echo.
-echo Tampermonkey will prompt you to install it automatically.
+echo Tampermonkey предложит установить его автоматически.
 
 goto END_SECTION
 
 :: ============================================
-::  UNINSTALL
+::  УДАЛЕНИЕ
 :: ============================================
 :UNINSTALL
 cls
 echo ============================================
-echo   Upscale Context Menu - Uninstall
+echo   Upscale Context Menu - Удаление
 echo ============================================
 echo.
 
-echo [1/3] Stopping upscale server...
+echo [1/3] Остановка сервера увеличения...
 taskkill /F /IM python.exe /FI "WINDOWTITLE eq *app.py*" >nul 2>&1
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":7869" ^| findstr "LISTENING"') do (
     taskkill /F /PID %%a >nul 2>&1
 )
-echo       Done.
+echo       Готово.
 echo.
 
-echo [2/3] Removing auto-start task...
+echo [2/3] Удаление задачи автозапуска...
 schtasks /delete /tn "UpscaleServer" /f >nul 2>&1
 if errorlevel 1 (
-    echo       No auto-start task found (already removed).
+    echo       Задача автозапуска не найдена (уже удалена).
 ) else (
-    echo       Auto-start removed.
+    echo       Автозапуск удалён.
 )
-echo       Done.
+echo       Готово.
 echo.
 
-echo [3/3] Removing Explorer context menu...
+echo [3/3] Удаление контекстного меню Проводника...
 set EXTENSIONS=.png .jpg .jpeg .webp .bmp .tiff .tif
 for %%E in (%EXTENSIONS%) do (
     reg delete "HKCR\SystemFileAssociations\%%E\shell\upscale" /f >nul 2>&1
 )
-echo       Done.
+echo       Готово.
 echo.
 
 echo ============================================
-echo   Uninstall complete!
+echo   Удаление завершено!
 echo ============================================
 echo.
-echo The following were NOT deleted automatically:
-echo   - Virtual environment: %SERVER_DIR%\.venv
-echo   - Model weights:       %SERVER_DIR%\weights
-echo   - Chrome extension (remove manually from chrome://extensions)
+echo Следующие компоненты НЕ были удалены автоматически:
+echo   - Виртуальное окружение: %SERVER_DIR%\.venv
+echo   - Веса модели:          %SERVER_DIR%\weights
+echo   - Расширение Chrome (удалите вручную в chrome://extensions)
 echo.
-echo To fully remove everything, delete the folder:
+echo Для полного удаления всего, удалите папку:
 echo   %PROJECT_DIR%
 echo.
 goto END_SECTION
 
 :: ============================================
-::  END SECTION helper (use goto, not call)
+::  Вспомогательная метка END_SECTION (используйте goto, не call)
 :: ============================================
 :END_SECTION
 if "%CLI_MODE%"=="1" exit /b 0

@@ -5,7 +5,7 @@ const SERVER_URL = "http://127.0.0.1:7869";
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "upscale-image",
-    title: "Апскейлнуть",
+    title: "Увеличить (4x)",
     contexts: ["image"],
   });
 });
@@ -35,9 +35,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     let message = err instanceof Error ? err.message : String(err);
 
     if (message.includes("Server not available") || message.includes("Failed to fetch")) {
-      message = "Сервер апскейла не запущен. Запустите server/start.bat";
+      message = "Сервер увеличения не запущен. Запустите manage.bat start";
     }
 
-    chrome.tabs.sendMessage(tab.id, { type: "upscale-error", message: "⚠️ Апскейл: " + message });
+    chrome.tabs.sendMessage(tab.id, { type: "upscale-error", message: "⚠️ Увеличение: " + message });
   }
 });
