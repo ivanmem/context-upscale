@@ -357,13 +357,11 @@ if not exist "%TM_SCRIPT%" (
     goto END_SECTION
 )
 
-echo Opening Tampermonkey script in browser...
+set TM_URL=file:///%TM_SCRIPT:\=/%
+echo Open this URL in your browser to install the script:
+echo   %TM_URL%
 echo.
-echo If Tampermonkey is installed, it will prompt you to install the script.
-echo If nothing happens, open this URL manually:
-echo   file:///%TM_SCRIPT%
-echo.
-start "" "%TM_SCRIPT%"
+echo Tampermonkey will prompt you to install it automatically.
 
 goto END_SECTION
 
