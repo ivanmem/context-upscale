@@ -31,6 +31,7 @@ if /i "%~1"=="weights" goto DOWNLOAD_WEIGHTS
 if /i "%~1"=="autostart" goto REGISTER_AUTOSTART
 if /i "%~1"=="no-autostart" goto REMOVE_AUTOSTART
 if /i "%~1"=="tampermonkey" goto INSTALL_TM
+if /i "%~1"=="extension" goto BUILD_EXTENSION
 if /i "%~1"=="context-menu" goto INSTALL_CONTEXT_MENU
 if /i "%~1"=="no-context-menu" goto REMOVE_CONTEXT_MENU
 if /i "%~1"=="uninstall" goto UNINSTALL
@@ -50,6 +51,7 @@ echo   no-autostart    Удалить автозапуск
 echo   context-menu    Добавить «Увеличить» в контекстное меню Проводника
 echo   no-context-menu Удалить «Увеличить» из контекстного меню Проводника
 echo   tampermonkey    Установить скрипт Tampermonkey
+echo   extension       Собрать расширение Chrome
 echo   uninstall       Остановить сервер и удалить автозапуск
 echo   status          Показать статус сервера, автозапуска и контекстного меню
 exit /b 1
@@ -97,6 +99,7 @@ echo   [5] Загрузить только веса модели
 echo   [6] Зарегистрировать автозапуск при входе
 echo   [7] Удалить автозапуск
 echo   [8] Установить скрипт Tampermonkey
+echo   [C] Собрать расширение Chrome
 echo   [9] Удалить (остановка + удаление автозапуска)
 echo   [A] Добавить «Увеличить» в контекстное меню Проводника
 echo   [B] Удалить «Увеличить» из контекстного меню Проводника
@@ -112,6 +115,7 @@ if "%CHOICE%"=="5" goto DOWNLOAD_WEIGHTS
 if "%CHOICE%"=="6" goto REGISTER_AUTOSTART
 if "%CHOICE%"=="7" goto REMOVE_AUTOSTART
 if "%CHOICE%"=="8" goto INSTALL_TM
+if /i "%CHOICE%"=="C" goto BUILD_EXTENSION
 if "%CHOICE%"=="9" goto UNINSTALL
 if /i "%CHOICE%"=="A" goto INSTALL_CONTEXT_MENU
 if /i "%CHOICE%"=="B" goto REMOVE_CONTEXT_MENU
@@ -405,6 +409,7 @@ echo ============================================
 echo.
 
 echo Сборка скрипта Tampermonkey через Vite...
+cd /d "%PROJECT_DIR%"
 call npm run build:tm
 if errorlevel 1 (
     echo ОШИБКА: Сборка не удалась. Убедитесь, что Node.js и npm установлены.
@@ -427,6 +432,51 @@ echo   %TM_URL%
 echo.
 echo Tampermonkey предложит установить его автоматически.
 
+goto END_SECTION
+
+:: ============================================
+::  СБОРКА РАСШИРЕНИЯ CHROME
+:: ============================================
+:BUILD_EXTENSION
+cls
+echo ============================================
+echo   Сборка расширения Chrome
+echo ============================================
+echo.
+
+cd /d "%PROJECT_DIR%"
+
+echo Установка зависимостей (если нужно)...
+call npm install --quiet >nul 2>&1
+
+echo Сборка через Vite...
+call npm run build:ext
+if errorlevel 1 (
+    echo ОШИБКА: Сборка не удалась. Убедитесь, что Node.js и npm установлены.
+    echo        Выполните: npm install
+    goto END_SECTION
+)
+echo       Готово.
+echo.
+
+set EXT_DIST=%PROJECT_DIR%extension\dist
+
+if not exist "%EXT_DIST%\manifest.json" (
+    echo ОШИБКА: manifest.json не найден в %EXT_DIST%
+    goto END_SECTION
+)
+
+echo ============================================
+echo   Расширение собрано!
+echo ============================================
+echo.
+echo Инструкция по установке:
+echo   1. Откройте chrome://extensions
+echo   2. Включите «Режим разработчика» (справа сверху)
+echo   3. Нажмите «Загрузить распакованное расширение»
+echo   4. Выберите папку:
+echo      %EXT_DIST%
+echo.
 goto END_SECTION
 
 :: ============================================
