@@ -19,8 +19,7 @@ set SERVER_URL=http://127.0.0.1:7869
 :: --- CLI argument handling ---
 set CLI_MODE=0
 if "%~1"=="" goto MENU
-:: Ignore internal flags (e.g. --elevated from schtasks)
-if "%~1:~0,2%"=="--" goto MENU
+if "%~1"=="--elevated" goto MENU
 set CLI_MODE=1
 :: In CLI mode: exit after each command. In interactive: pause + menu.
 if /i "%~1"=="install" goto FULL_INSTALL
