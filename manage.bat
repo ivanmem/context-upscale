@@ -19,7 +19,7 @@ set SERVER_URL=http://127.0.0.1:7869
 :MENU
 cls
 echo ============================================
-echo   Upscale Context Menu - Setup
+echo   Upscale Context Menu - Manager
 echo ============================================
 echo.
 
@@ -43,6 +43,7 @@ echo   [5] Download model weights only
 echo   [6] Register auto-start on login
 echo   [7] Remove auto-start
 echo   [8] Install Tampermonkey script
+echo   [9] Uninstall (stop + remove autostart)
 echo   [0] Exit
 echo.
 set /p CHOICE="Select an option: "
@@ -55,6 +56,7 @@ if "%CHOICE%"=="5" goto DOWNLOAD_WEIGHTS
 if "%CHOICE%"=="6" goto REGISTER_AUTOSTART
 if "%CHOICE%"=="7" goto REMOVE_AUTOSTART
 if "%CHOICE%"=="8" goto INSTALL_TM
+if "%CHOICE%"=="9" goto UNINSTALL
 if "%CHOICE%"=="0" exit /b 0
 
 echo Invalid option.
@@ -337,5 +339,48 @@ echo   file:///%TM_SCRIPT%
 echo.
 start "" "%TM_SCRIPT%"
 
+pause
+goto MENU
+
+:: ============================================
+::  UNINSTALL
+:: ============================================
+:UNINSTALL
+cls
+echo ============================================
+echo   Upscale Context Menu - Uninstall
+echo ============================================
+echo.
+
+echo [1/2] Stopping upscale server...
+taskkill /F /IM python.exe /FI "WINDOWTITLE eq *app.py*" >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":7869" ^| findstr "LISTENING"') do (
+    taskkill /F /PID %%a >nul 2>&1
+)
+echo       Done.
+echo.
+
+echo [2/2] Removing auto-start task...
+schtasks /delete /tn "UpscaleServer" /f >nul 2>&1
+if errorlevel 1 (
+    echo       No auto-start task found (already removed).
+) else (
+    echo       Auto-start removed.
+)
+echo       Done.
+echo.
+
+echo ============================================
+echo   Uninstall complete!
+echo ============================================
+echo.
+echo The following were NOT deleted automatically:
+echo   - Virtual environment: %SERVER_DIR%\.venv
+echo   - Model weights:       %SERVER_DIR%\weights
+echo   - Chrome extension (remove manually from chrome://extensions)
+echo.
+echo To fully remove everything, delete the folder:
+echo   %PROJECT_DIR%
+echo.
 pause
 goto MENU
