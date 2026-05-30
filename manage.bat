@@ -115,8 +115,7 @@ if not exist "%VENV_DIR%" (
     python -m venv "%VENV_DIR%"
     if errorlevel 1 (
         echo ERROR: Failed to create venv. Make sure Python 3.10+ is installed.
-        pause
-        goto MENU
+        goto END_SECTION
     )
 )
 call "%VENV_DIR%\Scripts\activate.bat"
@@ -134,8 +133,7 @@ echo       Installing server dependencies...
 pip install -r "%SERVER_DIR%\requirements.txt" --quiet
 if errorlevel 1 (
     echo ERROR: Failed to install dependencies.
-    pause
-    goto MENU
+    goto END_SECTION
 )
 echo       Done.
 echo.
@@ -147,8 +145,7 @@ if not exist "%WEIGHTS_FILE%" (
         echo ERROR: Failed to download weights.
         echo        Download manually: https://huggingface.co/Kim2091/UltraSharp/resolve/main/4x-UltraSharp.pth
         echo        Place in: %SERVER_DIR%\weights\
-        pause
-        goto MENU
+        goto END_SECTION
     )
 ) else (
     echo       Weights already present.
@@ -248,8 +245,7 @@ if not exist "%VENV_DIR%" (
     python -m venv "%VENV_DIR%"
     if errorlevel 1 (
         echo ERROR: Failed to create venv. Make sure Python 3.10+ is installed.
-        pause
-        goto MENU
+        goto END_SECTION
     )
 )
 call "%VENV_DIR%\Scripts\activate.bat"
@@ -265,8 +261,7 @@ echo Installing server dependencies...
 pip install -r "%SERVER_DIR%\requirements.txt" --quiet
 if errorlevel 1 (
     echo ERROR: Failed to install dependencies.
-    pause
-    goto MENU
+    goto END_SECTION
 )
 
 echo Done.
