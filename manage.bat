@@ -16,6 +16,43 @@ set VENV_DIR=%SERVER_DIR%\.venv
 set WEIGHTS_FILE=%SERVER_DIR%\weights\4x-UltraSharp.pth
 set SERVER_URL=http://127.0.0.1:7869
 
+:: --- CLI argument handling ---
+set CLI_MODE=0
+if "%~1"=="" goto MENU
+set CLI_MODE=1
+:: In CLI mode: exit after each command. In interactive: pause + menu.
+if /i "%~1"=="install" goto FULL_INSTALL
+if /i "%~1"=="start" goto START_SERVER
+if /i "%~1"=="stop" goto STOP_SERVER
+if /i "%~1"=="deps" goto INSTALL_DEPS
+if /i "%~1"=="weights" goto DOWNLOAD_WEIGHTS
+if /i "%~1"=="autostart" goto REGISTER_AUTOSTART
+if /i "%~1"=="no-autostart" goto REMOVE_AUTOSTART
+if /i "%~1"=="tampermonkey" goto INSTALL_TM
+if /i "%~1"=="uninstall" goto UNINSTALL
+if /i "%~1"=="status" goto STATUS
+echo Unknown command: %~1
+echo.
+echo Usage: manage.bat [command]
+echo.
+echo Commands:
+echo   install       Full install (venv + deps + weights + autostart + start)
+echo   start         Start server
+echo   stop          Stop server
+echo   deps          Install dependencies only
+echo   weights       Download model weights only
+echo   autostart     Register auto-start on login
+echo   no-autostart  Remove auto-start
+echo   tampermonkey  Install Tampermonkey script
+echo   uninstall     Stop server and remove auto-start
+echo   status        Show server and autostart status
+exit /b 1
+
+:STATUS
+curl -sf --max-time 2 %SERVER_URL%/health >nul 2>&1 && echo Server: RUNNING (%SERVER_URL%) || echo Server: NOT RUNNING
+schtasks /query /tn "UpscaleServer" >nul 2>&1 && echo Autostart: ENABLED || echo Autostart: DISABLED
+exit /b 0
+
 :MENU
 cls
 echo ============================================
@@ -159,8 +196,7 @@ echo   2. Enable "Developer mode" (top right)
 echo   3. Click "Load unpacked"
 echo   4. Select: %PROJECT_DIR%extension
 echo.
-pause
-goto MENU
+goto END_SECTION
 
 :: ============================================
 ::  START SERVER
@@ -183,8 +219,7 @@ goto START_END
 echo WARNING: Server did not respond within 15s.
 echo Check server\server.log for errors.
 :START_END
-pause
-goto MENU
+goto END_SECTION
 
 :: ============================================
 ::  STOP SERVER
@@ -196,8 +231,7 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :7869 ^| findstr LISTENING') 
     taskkill /F /PID %%a >nul 2>&1
 )
 echo Server stopped.
-pause
-goto MENU
+goto END_SECTION
 
 :: ============================================
 ::  INSTALL DEPENDENCIES
@@ -236,8 +270,7 @@ if errorlevel 1 (
 )
 
 echo Done.
-pause
-goto MENU
+goto END_SECTION
 
 :: ============================================
 ::  DOWNLOAD WEIGHTS
@@ -255,8 +288,7 @@ if exist "%WEIGHTS_FILE%" (
     echo.
     set /p RE_DOWNLOAD="Re-download? (y/N): "
     if /i "!RE_DOWNLOAD!" neq "y" (
-        pause
-        goto MENU
+        goto END_SECTION
     )
     del "%WEIGHTS_FILE%"
 )
@@ -268,8 +300,7 @@ if errorlevel 1 (
     echo        Place in: %SERVER_DIR%\weights\
 )
 echo.
-pause
-goto MENU
+goto END_SECTION
 
 :: ============================================
 ::  REGISTER AUTOSTART
@@ -284,8 +315,7 @@ if !errorlevel! neq 0 (
 ) else (
     echo Auto-start registered successfully.
 )
-pause
-goto MENU
+goto END_SECTION
 
 :: ============================================
 ::  REMOVE AUTOSTART
@@ -299,8 +329,7 @@ if !errorlevel! neq 0 (
 ) else (
     echo Auto-start removed.
 )
-pause
-goto MENU
+goto END_SECTION
 
 :: ============================================
 ::  INSTALL TAMPERMONKEY SCRIPT
@@ -317,8 +346,7 @@ call npm run build:tm
 if errorlevel 1 (
     echo ERROR: Build failed. Make sure Node.js and npm are installed.
     echo        Run: npm install
-    pause
-    goto MENU
+    goto END_SECTION
 )
 echo       Done.
 echo.
@@ -327,8 +355,7 @@ set TM_SCRIPT=%PROJECT_DIR%tampermonkey\dist\upscale.user.js
 
 if not exist "%TM_SCRIPT%" (
     echo ERROR: Built script not found at %TM_SCRIPT%
-    pause
-    goto MENU
+    goto END_SECTION
 )
 
 echo Opening Tampermonkey script in browser...
@@ -339,8 +366,7 @@ echo   file:///%TM_SCRIPT%
 echo.
 start "" "%TM_SCRIPT%"
 
-pause
-goto MENU
+goto END_SECTION
 
 :: ============================================
 ::  UNINSTALL
@@ -382,5 +408,12 @@ echo.
 echo To fully remove everything, delete the folder:
 echo   %PROJECT_DIR%
 echo.
+goto END_SECTION
+
+:: ============================================
+::  END SECTION helper (use goto, not call)
+:: ============================================
+:END_SECTION
+if "%CLI_MODE%"=="1" exit /b 0
 pause
 goto MENU

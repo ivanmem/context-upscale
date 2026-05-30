@@ -71,7 +71,9 @@ upscale-context-menu/
 
 ## Управление
 
-Все действия доступны через меню `setup.bat`:
+### Интерактивное меню
+
+Запусти `manage.bat` без аргументов:
 
 | Опция | Действие |
 |---|---|
@@ -84,6 +86,21 @@ upscale-context-menu/
 | [7] | Отключить автозапуск |
 | [8] | Установить Tampermonkey-скрипт |
 | [9] | Удалить (остановка + снятие автозапуска) |
+
+### CLI-режим
+
+```bat
+manage.bat start        # Запустить сервер
+manage.bat stop         # Остановить сервер
+manage.bat status       # Статус сервера и автозапуска
+manage.bat install      # Полная установка
+manage.bat deps         # Установить зависимости
+manage.bat weights      # Скачать веса модели
+manage.bat autostart    # Включить автозапуск
+manage.bat no-autostart # Отключить автозапуск
+manage.bat tampermonkey # Установить Tampermonkey-скрипт
+manage.bat uninstall    # Остановить + снять автозапуск
+```
 
 Ручной перезапуск сервера: `server/run-now.bat`
 
