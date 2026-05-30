@@ -64,20 +64,29 @@ upscale-context-menu/
 │   ├── weights/
 │   │   └── 4x-UltraSharp.pth
 │   ├── run-now.bat         # Перезапуск сервера (скрыто)
-│   ├── start-silent.vbs    # Скрытый запуск через python.exe
-│   ├── install-autostart.bat
-│   └── remove-autostart.bat
-├── setup.bat               # Установка всего одним скриптом
+│   └── start-silent.vbs    # Скрытый запуск через python.exe
+├── setup.bat               # Установка и управление (меню)
+├── uninstall.bat           # Полное удаление
 └── README.md
 ```
 
-## Управление автозапуском
+## Управление
 
-| Действие | Скрипт |
+Все действия доступны через меню `setup.bat`:
+
+| Опция | Действие |
 |---|---|
-| Включить автозапуск | `server/install-autostart.bat` |
-| Отключить автозапуск | `server/remove-autostart.bat` |
-| Перезапустить сервер (скрыто) | `server/run-now.bat` |
+| [1] | Полная установка (venv + зависимости + веса + автозапуск + запуск) |
+| [2] | Запустить сервер |
+| [3] | Остановить сервер |
+| [4] | Установить зависимости |
+| [5] | Скачать веса модели |
+| [6] | Включить автозапуск |
+| [7] | Отключить автозапуск |
+| [8] | Установить Tampermonkey-скрипт |
+
+Ручной перезапуск сервера: `server/run-now.bat`
+Полное удаление: `uninstall.bat`
 
 ## Требования
 
@@ -102,6 +111,6 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 → Нормально: модель грузится в VRAM при первом запросе (~2-3 сек). Дальше мгновенно.
 
 **Хочу полностью удалить**
-1. `server/remove-autostart.bat`
+1. Запусти `uninstall.bat`
 2. Удали расширение в `chrome://extensions`
 3. Удали папку проекта
