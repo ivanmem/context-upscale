@@ -1,0 +1,17 @@
+{
+  "name": "upscale-context-menu",
+  "version": "1.0.0",
+  "description": "Right-click any image → Upscale → result in new tab. Local GPU server with Real-ESRGAN.",
+  "scripts": {
+    "build:tm": "vite build --config vite.config.tm.js",
+    "test": "vitest run"
+  },
+  "keywords": ["upscale", "real-esrgan", "chrome-extension", "tampermonkey", "gpu", "image-upscaling"],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "devDependencies": {
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7"
+  }
+}
