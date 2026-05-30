@@ -6,7 +6,8 @@
   "permissions": ["contextMenus", "activeTab"],
   "host_permissions": ["http://127.0.0.1:7869/*"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
