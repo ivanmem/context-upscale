@@ -62,8 +62,11 @@ echo ============================================
 echo.
 
 :: --- Server status check ---
-echo Checking server status...
-curl -sf --max-time 2 %SERVER_URL%/health >nul 2>&1 && echo   Server: RUNNING (%SERVER_URL%) || echo   Server: NOT RUNNING
+netstat -ano | findstr ":7869" | findstr "LISTENING" >nul 2>&1 && (
+    echo   Server: RUNNING (%SERVER_URL%)
+) || (
+    echo   Server: NOT RUNNING
+)
 
 :: --- Autostart status check ---
 schtasks /query /tn "UpscaleServer" >nul 2>&1 && (
